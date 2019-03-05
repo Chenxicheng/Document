@@ -20,6 +20,8 @@ SpringCloud是基于SpringBoot的一整套实现微服务的框架。它利用Sp
 
   Netflix在2018年对Eureka 2.x版本开源不再进行维护，所以在第3节中介绍由阿里开源的Nacos，它实现与Eureka同样的功能。
 
+  ![](https://raw.githubusercontent.com/Chenxicheng/Document/master/study/spring%20cloud%20%E5%BE%AE%E6%9C%8D%E5%8A%A1/img/Eureka.png?raw=true)
+
 #### 1.2 配置中心组件
   在微服务中，由于服务数量，为方便多个服务的配置文件的统一管理，实时更新，所以需要配置中心组件来进行管理。
   
@@ -30,6 +32,7 @@ SpringCloud是基于SpringBoot的一整套实现微服务的框架。它利用Sp
   SpringCloudConfig服务端存储配置文件分为Git、SVN和本地存储，默认为Git。
 
   在阿里Nacos中集成了配置中心组件，实现与SpringCloudConfig同样功能，但更易操作和实时更新。
+  ![](https://github.com/Chenxicheng/Document/blob/master/study/spring%20cloud%20%E5%BE%AE%E6%9C%8D%E5%8A%A1/img/springcloudconfig.png?raw=true)
 
 #### 1.3 认证中心组件
   认证中心组件提供身份管理认证服务，用于构建安全的应用程序和服务。
@@ -37,14 +40,16 @@ SpringCloud是基于SpringBoot的一整套实现微服务的框架。它利用Sp
   Spring提供spring security oauth2安全认证框架。
 
   oauth2 认证授权流程：
-
+  名词解释：
   - Resource Owner：资源所有者。即用户。
   - Client：客户端（第三方应用）。
   - Authorization server：授权（认证）服务器。即服务提供商专门用来处理认证的服务器。
   - Resource server：资源服务器，即服务提供商存放用户生成的资源的服务器。它与认证服务器，可以是同一台服务器，也可以是不同的服务器。
   - Access Token：访问令牌。使用合法的访问令牌获取受保护的资源。
-  ![blockchain](图片)
 
+  ![oauth2](https://github.com/Chenxicheng/Document/blob/master/study/spring%20cloud%20%E5%BE%AE%E6%9C%8D%E5%8A%A1/img/oauth2.png?raw=true)
+
+  流程说明：
   - （A）客户端向资源所有者请求授权。授权请求可以直接对资源所有者(如图所示)进行，或者通过授权服务器作为中介进行间接访问（首选方案）。
   - （B）资源所有者允许授权，并返回凭证（如code）。
   - （C）客户端通过授权服务器进行身份验证，并提供授权凭证（如code），请求访问令牌（access token）。
@@ -79,7 +84,7 @@ SpringCloud是基于SpringBoot的一整套实现微服务的框架。它利用Sp
   - 如果 Gateway Handler Mapping 中找到与请求相匹配的路由，将其发送到 Gateway Web Handler。
   - Handler 再通过指定的过滤器链来将请求路由发送到实际的服务执行业务逻辑，然后返回结果。 
   过滤器之间用虚线分开是因为过滤器可能会在发送代理请求之前（“pre”）或之后（“post”）执行业务逻辑。
-
+  ![](https://github.com/Chenxicheng/Document/blob/master/study/spring%20cloud%20%E5%BE%AE%E6%9C%8D%E5%8A%A1/img/spring-cloud-gateway.png?raw=true)
 
 #### 1.5 服务消费负载均衡组件
   服务消费负载均衡组件在微服务中帮助消费方服务自动请求消费提供方服务，并基于负载均衡算法，请求其中一个提供者服务。
@@ -94,7 +99,7 @@ SpringCloud是基于SpringBoot的一整套实现微服务的框架。它利用Sp
   - 支持HTTP请求和响应的压缩。
 
   Feign整合Ribbon负载均衡器。Ribbon是Netflix发布的开源项目，主要功能是提供客户端的服务负载均衡算法，将中间层服务连接在一起。Ribbon客户端组件提供一系列完善的配置项如连接超时，重试等。简单的说，就是在配置文件中列出Load Balancer（简称LB）后面所有的机器，Ribbon会自动的帮助你基于某种规则（如简单轮询，随即连接等）去连接这些机器。Ribbon使服务调用端具备负载均衡能力，通过和服务注册组件的紧密结合，不用在服务集群内再架设负载均衡服务，很大程度上简化服务集群内的架构。
-
+![](https://github.com/Chenxicheng/Document/blob/master/study/spring%20cloud%20%E5%BE%AE%E6%9C%8D%E5%8A%A1/img/rabooin.png?raw=true)
 
 #### 1.6 断路器组件
   在微服务中，服务之间形成调用链路，链路中的任何一个服务提供者都可能面临着相应超时、宕机等不可用的情况，在高并发的情况下，这种情况会随着并发量的上升恶化，形成“雪崩效应”，而断路器正是用来解决这一个问题的组件。
@@ -115,8 +120,15 @@ SpringCloud是基于SpringBoot的一整套实现微服务的框架。它利用Sp
   - 当断路器打开，对主逻辑进行熔断之后，hystrix会启动一个休眠时间窗，在这个时间窗内，降级逻辑是临时的成为主逻辑，当休眠时间窗到期，断路器将进入半开状态，释放一次请求到原来的主逻辑上，如果此次请求正常返回，那么断路器将继续闭合，主逻辑恢复，如果这次请求依然有问题，断路器继续进入打开状态，休眠时间窗重新计时
   
   通过上面的一系列机制，hystrix的断路器实现对依赖资源故障的端口、对降级策略的自动切换以及对主逻辑的自动恢复机制。这使得微服务在依赖外部服务或资源的时候得到了非常好的保护，同时对于一些具备降级逻辑的业务需求可以实现自动化的切换与恢复，相比于设置开关由监控和运维来进行切换的传统实现方式显得更为智能和高效。
-  
-### 2. Nacos 简介
+![](https://github.com/Chenxicheng/Document/blob/master/study/spring%20cloud%20%E5%BE%AE%E6%9C%8D%E5%8A%A1/img/hystrix-work-flow.png?raw=true)
+
+### 2. [Nacos](https://nacos.io/zh-cn/docs/what-is-nacos.html) 简介
+
+Nacos 致力于帮助您发现、配置和管理微服务。Nacos 提供了一组简单易用的特性集，帮助您快速实现动态服务发现、服务配置、服务元数据及流量管理。
+
+Nacos 帮助您更敏捷和容易地构建、交付和管理微服务平台。 Nacos 是构建以“服务”为中心的现代应用架构 (例如微服务范式、云原生范式) 的服务基础设施。
+
+
 
 
 ### 3. Sentinel 简介
