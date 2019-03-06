@@ -202,7 +202,7 @@ Nacos 实现发现、配置和管理微服务。它提供一组简单易用的�
 - 健康检查（Health Check）
   以指定方式检查服务下挂载的实例 (Instance) 的健康度，从而确认该实例 (Instance) 是否能提供服务。根据检查结果，实例 (Instance) 会被判断为健康或不健康。对服务发起解析请求时，不健康的实例 (Instance) 不会返回给客户端。
 
-#### 2.3 Nacos安装与使用
+#### 2.3 Nacos安装与UI界面使用
 - 下载Nacos压缩包
   从 [最新稳定版本](https://github.com/alibaba/nacos/releases) 下载 nacos-server-$version.zip 包，并解压。
   在 bin 目录下启动或关闭Nacos服务。
@@ -229,4 +229,98 @@ Nacos 实现发现、配置和管理微服务。它提供一组简单易用的�
   - 启动Nacos服务成功后，默认端口8848，访问连接 `http://127.0.0.1:8848/nacos`，默认用户名`nacos`及密码`nacos`。
   - Nacos管理平台分为配置管理和服务管理两功能模块。服务管理模块主要是显示已经发现注册到Nacos上的服务及服务的健康状态。配置管理模块主要是对于服务的配置文件进行统一管理，可添加修改删除各种格式的服务配置文件，可进行配置文件历史版本的回退。
 
+#### 2.4 Nacos在SpringCloud中使用
+
+  ##### 2.4.1 服务注册Nacos
+  在SpringCloud的Nacos使用中，客户端确保版本一直。在Maven依赖中，SpringBoot 2.0.x 版本，SpringCloud Finchley.SR2 版本，Nacos 0.2.x 版本。
+
+  在Springboot应用中pom.xml引入nacos依赖
+  ```
+    <!-- nacos服务注册发现依赖 -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+      <version>0.2.1.RELEASE</version>
+    </dependency>
+    <!-- springcloud依赖 -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-dependencies</artifactId>
+      <version>Finchley.SR1</version>
+    </dependency>
+  ```
+  在Springboot中配置文件的格式分为 `.properties` 和 `.yml`，通常使用 `.yml` 格式，文件名称改为 `bootstrap.yml` , 因为在springboot加载配置文件中`bootstrap.yml` 为主文件，而另外的 `application.yml` 为次文件，加载顺序是 `bootstrap.yml > application.yml`。
+
+  在Springboot的配置文件`bootstrap.yml`中添加Nacos注册地址。
+  ```
+    spring:
+      application:
+        name: app-name # 应用名称
+      cloud:
+        nacos:
+          discovery:
+            server-addr: localhost:8848 # 注册nacos地址 （此处是默认地址）
+  ```
+
+  启动应用后，在Nacos管理界面服务管理的服务列表中查看该服务时候注册上，若注册成功，健康状态为true，否则为false。
+
+  ##### 2.4.2 Nacos配置中心
+
+  在Springboot应用中引入nacos config依赖
+
+  ```
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+      <version>0.2.1.RELEASE</version>
+    </dependency>
+  ```
+  在配置文件`bootstrap.yml`中配置Nacos config 的地址等其他信息。
+
+  ```
+    spring:
+    application:
+      name: app-name # 应用名称
+    #配置中心
+    cloud:
+      nacos:
+        config:
+          server-addr: 192.168.30.35:8848 # config 地址， 与Nacos注册地址一致
+          file-extension: yaml # 配置文件扩展名
+          shared-dataids: xx-application.yaml # 公共配置文件 
+    profiles:
+      active: dev # 配置文件环境 （此处dev表示开发环境）
+  ```
+  应用启动前，在nacos管理平台的配置管理的配置列表中添加配置信息。
+
+  在`bootstrap.yml`需要配置 spring.application.name ，是因为它是构成 Nacos 配置管理 dataId 字段的一部分。在 Nacos Spring Cloud 中，dataId 的完整格式如下：
+
+  `${prefix}-${spring.profile.active}.${file-extension}`
+  - prefix 默认为 spring.application.name 的值，也可以通过配置项 spring.cloud.nacos.config.prefix来配置。
+  - spring.profile.active 即为当前环境对应的 profile。 注意：当 spring.profile.active 为空时，对应的连接符 - 也将不存在，dataId 的拼接格式变成 `${prefix}.${file-extension}`
+  - file-exetension 为配置内容的数据格式，可以通过配置项 spring.cloud.nacos.config.file-extension 来配置。目前只支持 properties 和 yaml 类型。
+  
+  可以在配置管理中的配置文件里配置Nacos server的注册地址。
+  
+  通过 Spring Cloud 原生注解 @RefreshScope 实现配置自动更新：
+
+  ```
+    @RestController
+    @RequestMapping("/config")
+    @RefreshScope
+    public class ConfigController {
+
+        @Value("${useLocalCache:false}")
+        private boolean useLocalCache;
+
+        @RequestMapping("/get")
+        public boolean get() {
+            return useLocalCache;
+        }
+    }
+  ```
+
+
 ### 3. Sentinel 简介
+
+
