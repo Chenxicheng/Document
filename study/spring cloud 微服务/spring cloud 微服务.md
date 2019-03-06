@@ -228,6 +228,8 @@ Nacos 实现发现、配置和管理微服务。它提供一组简单易用的�
 - 使用Nacos
   - 启动Nacos服务成功后，默认端口8848，访问连接 `http://127.0.0.1:8848/nacos`，默认用户名`nacos`及密码`nacos`。
   - Nacos管理平台分为配置管理和服务管理两功能模块。服务管理模块主要是显示已经发现注册到Nacos上的服务及服务的健康状态。配置管理模块主要是对于服务的配置文件进行统一管理，可添加修改删除各种格式的服务配置文件，可进行配置文件历史版本的回退。
+  
+  ![](img/nacos-ui.png)
 
 #### 2.4 Nacos在SpringCloud中使用
 
@@ -323,6 +325,127 @@ Nacos 实现发现、配置和管理微服务。它提供一组简单易用的�
   ```
 
 
-### 3. Sentinel 简介
+### 3. [pig](https://gitee.com/log4j/pig) 开源框架
 
+  基于SpringCloud框架开发的RBAC权限管理系统。由于原框架采用Eureka作为注册中心，SpringCloudConfig作为配置中心，对于服务注册界面显示和配置文件配置不是友好，所以在原有框架的基础上对将注册中心和配置中心统一替换为阿里开源的Nacos。
+  ![](img/pig-kuangjia.png)
+  pig模块说明：
+  ```
+    pig
+    ├── pig-ui -- 前端工程[8080]
+    ├── pig-auth -- 授权服务提供[3000]
+    └── pig-common -- 系统公共模块 
+        ├── pig-common-core -- 公共工具类核心包
+        ├── pig-common-log -- 日志服务
+        └── pig-common-security -- 安全工具类
+    ├── pig-config -- 配置中心[8888] (不启用)
+    ├── pig-eureka -- 服务注册与发现[8761] (不启用)
+    ├── pig-gateway -- Spring Cloud Gateway网关[9999]
+    └── pig-upms -- 通用用户权限管理模块
+        └── pigx-upms-api -- 通用用户权限管理系统公共api模块
+        └── pigx-upms-biz -- 通用用户权限管理系统业务处理模块[4000]
+    └── pigx-visual  -- 图形化模块 
+        ├── pigx-monitor -- Spring Boot Admin监控 [5001]
+        └── pigx-codegen -- 图形化代码生成[5003]
+  ```
+  
+  项目部署
+
+  - 运行环境
+    ```
+    JDK	1.8	强制要求,1.8以上版本请自行添加Java EE相关jar包
+    MySQL	5.7 +	强制要求,至少5.7!当然8.0也没有问题
+    Redis	3.2 +	windows版只能使用Redis3.2,类Unix系统使用最新的5.0也没有关系
+    node	8.0 +	
+    npm	6.0 +	
+    ```
+  - 配置本地host
+    ```
+    # 本地开发环境  
+    127.0.0.1   pig-mysql
+    127.0.0.1   pig-redis
+    127.0.0.1   pig-gateway
+    127.0.0.1   pig-eureka
+    ```
+  - 初始化数据库
+    - 数据库参数
+      ```
+      版本： mysql5.7+
+      默认字符集: utf8mb4
+      默认排序规则: utf8mb4_general_ci
+      ```
+    - 脚本说明
+      `pig/db/pig.sql` 
+  - 更换依赖
+    替换`pig/pom.xml`中依赖。
+    ```
+      <!--eureka 客户端-->
+      <!--<dependency>-->
+        <!--<groupId>org.springframework.cloud</groupId>-->
+        <!--<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>-->
+      <!--</dependency>-->
+      <!--&lt;!&ndash;配置文件处理器&ndash;&gt;-->
+      <!--<dependency>-->
+        <!--<groupId>org.springframework.boot</groupId>-->
+        <!--<artifactId>spring-boot-configuration-processor</artifactId>-->
+        <!--<optional>true</optional>-->
+      <!--</dependency>-->
+      <!-- alibaba nacos -->
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        <version>${nacos.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        <version>${nacos.version}</version>
+      </dependency>
+    ```  
+
+  - Nacos配置文件
+    - 添加配置文件
+      ```
+      pig/pig-config/src/main/resources/config/pig-auth-dev.yml    
+      pig/pig-config/src/main/resources/config/pig-upms-dev.yml  
+      pig/pig-config/src/main/resources/config/pig-gateway-dev.yml
+      pig/pig-config/src/main/resources/config/pig-monitor-dev.yml
+      ```
+      将以上配置文件信息添加到nacos管理平台，修改数据库密码并且在配置文件中加入nacos注册地址
+      ```
+      cloud:
+        nacos:
+          discovery:
+            server-addr: localhost:8848
+            endpoint: UTF-8
+      ```
+      将`pig/pig-config/src/main/resources/config/application.yml`也添加到配置中心，该配置为公共配置文件。
+    - bootstrap.yml配置
+      添加配置中心地址
+      ```
+      spring:
+        application:
+          name: pig-xxx
+        # 配置中心
+        cloud:
+          nacos:
+            config:
+              server-addr: 127.0.0.1:8848
+              file-extension: yaml
+              shared-dataids: pig-application.yaml # 公共配置文件
+        profiles:
+          active: dev
+      ```
+  - 启动顺序
+      ```  
+      1. PigGatewayApplication  
+      2. PigAuthApplication 
+      3. PigAdminApplication  
+      ```      
+  - 启动前端
+    在 `pig/pig-ui`目录下执行npm命令
+    - 安装依赖
+    `npm install`
+    - 启动开发环境
+    `npm run dev`
 
