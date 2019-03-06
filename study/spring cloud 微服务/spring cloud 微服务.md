@@ -300,6 +300,8 @@ Nacos 实现发现、配置和管理微服务。它提供一组简单易用的�
   - spring.profile.active 即为当前环境对应的 profile。 注意：当 spring.profile.active 为空时，对应的连接符 - 也将不存在，dataId 的拼接格式变成 `${prefix}.${file-extension}`
   - file-exetension 为配置内容的数据格式，可以通过配置项 spring.cloud.nacos.config.file-extension 来配置。目前只支持 properties 和 yaml 类型。
   
+  ![](img/nacos-config-use.png)
+
   可以在配置管理中的配置文件里配置Nacos server的注册地址。
   
   通过 Spring Cloud 原生注解 @RefreshScope 实现配置自动更新：
